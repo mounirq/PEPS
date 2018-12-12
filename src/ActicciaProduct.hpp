@@ -15,7 +15,7 @@ public:
     ~ActicciaProduct();
 
     ActicciaProduct();
-    ActicciaProduct(double T_, int nbTimeSteps_, int size_, double vlr);
+    ActicciaProduct(double T_, int nbTimeSteps_, int size_);
     ActicciaProduct(const ActicciaProduct &acticciaProduct);
     double payoff(const PnlMat *path);
 };

@@ -6,8 +6,6 @@
 #include "PnlRandom.hpp"
 #include "FakeRandom.hpp"
 #include <iostream>
-#include <jlparser/parser.hpp>
-
 
 
 class MonteCarlo
@@ -25,7 +23,6 @@ public:
 
     MonteCarlo(const MonteCarlo &MC);
 
-    MonteCarlo(char *fileName);
 /**
      * Calcule le prix de l'option à la date 0
      *

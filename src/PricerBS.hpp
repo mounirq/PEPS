@@ -14,7 +14,6 @@ public:
 
 
     ~PricerBS();
-    PricerBS(char *fileName);
     PricerBS(BlackScholesModel *model, Option *option, RandomGenerator *rng, double fdStep, size_t nbSamples, int H);
 
     void price(double &prix, double &ic);

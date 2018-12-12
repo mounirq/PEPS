@@ -1,10 +1,5 @@
 #include "PricerMC.hpp"
 
-PricerMC::PricerMC(char *fileName) : AbstractPricer(fileName)
-{
-    mc_ = new MonteCarlo(mod_, opt_, rng_, fdStep_, nbSamples_);
-}
-
 PricerMC::PricerMC(BlackScholesModel *model, Option *option, RandomGenerator *rng, double fdStep, size_t nbSamples, int H) : AbstractPricer(model, option, rng, fdStep, nbSamples, H)
 {
     mc_ = new MonteCarlo(mod_, opt_, rng_, fdStep_, nbSamples_);

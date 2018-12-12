@@ -3,13 +3,10 @@
 
 #include <iostream>
 #include <string>
-#include "jlparser/parser.hpp"
-#include "BasketOption.hpp"
-#include "AsianOption.hpp"
-#include "PerformanceOption.hpp"
 
 #include "BlackScholesModel.hpp"
 #include "Option.hpp"
+#include "VanillaOption.hpp"
 #include "pnl/pnl_finance.h"
 #include "pnl/pnl_vector.h"
 
