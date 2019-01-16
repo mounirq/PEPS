@@ -112,12 +112,11 @@ void BlackScholesModel::asset(PnlMat *path, double t, double T, int nbTimeSteps,
 {
     int sizePast = past->m;
     int numberOfExpectedElements = ceil(t*nbTimeSteps/T) + 1;
-    if (numberOfExpectedElements != sizePast)
+    /*if (numberOfExpectedElements != sizePast)
     {
-
         std::cerr<<"\nERROR: size of Past doesn't fit the time t\nSizePast = "<<sizePast<<"\tnumberOfExpectedElements = "<<numberOfExpectedElements<<"\n";
         throw;
-    }
+    }*/
 
     double timeI1 = 0;
     double timeI = 0;

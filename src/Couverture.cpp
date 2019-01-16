@@ -1,16 +1,103 @@
-//
-// Created by Yasmine Tidane on 21/09/2018.
-//
-
 #include "Couverture.hpp"
 
-Couverture::Couverture(AbstractPricer *pricer)
+using namespace std;
+
+Couverture::Couverture(int H, AbstractPricer *pricer)
 {
+	H_ = H;
+	accticia_prices_ = pnl_vect_create(H_ + 1);
+	portfolio_values_ = pnl_vect_create(H_ + 1);
     pricer_ = pricer;
 }
 
 Couverture::~Couverture() {
     delete pricer_;
+}
+
+void Couverture::profits_and_losses2(const PnlMat *market_trajectory, double &p_and_l)
+{
+	// Create variables needed
+	PnlVect *current_spot = pnl_vect_create(20);
+	PnlVect *previous_delta = pnl_vect_create(20);
+	PnlVect *current_delta = pnl_vect_create(20);
+	PnlVect *icDelta = pnl_vect_create(20);
+	int N = pricer_->opt_->nbTimeSteps_;
+	PnlMat *past = pnl_mat_create(N + 1, 20);
+	PnlVect *vector_tmp = pnl_vect_create(20);
+	PnlVect *delta_diff = pnl_vect_create(20);
+	double accticia_current_price = 0;
+	double portfolio_current_value = 0;
+	double ic = 0;
+	double portfolio_current_risk_value = 0;
+	double portfolio_current_risk_free_value = 0;
+	int past_matrix_size = 2;
+	double time = 0;
+	double actualization_factor = exp(pricer_->mod_->r_*pricer_->opt_->T_ / H_);
+
+	if (H_ % N != 0) {
+		cerr << "H is not a multiple of N";
+		throw;
+	}
+	int numberDatesBetweenRebalancing =  H_ / N;
+	
+	// In t = 0 :
+	PnlMat *sub_past = pnl_mat_create(1, 20);
+	pnl_vect_clone(current_spot, pricer_->mod_->spot_);
+	pnl_mat_set_row(past, current_spot, 0);
+	pnl_mat_set_row(sub_past, current_spot, 0);
+
+	pricer_->price(accticia_current_price, ic);
+	pnl_vect_set(accticia_prices_, 0, accticia_current_price);
+
+	pricer_->delta(sub_past, time, previous_delta, icDelta);
+	
+	portfolio_current_risk_value = pnl_vect_scalar_prod(previous_delta, current_spot );
+	portfolio_current_risk_free_value = accticia_current_price - portfolio_current_risk_value;
+	portfolio_current_value = portfolio_current_risk_value + portfolio_current_risk_free_value;
+
+	pnl_vect_set(portfolio_values_, 0, portfolio_current_value);
+
+	for (int i = 1; i <= H_; i++) {
+		time = double(i) / H_;
+		//pnl_mat_resize(sub_past, past_matrix_size, 20);
+
+		pnl_mat_extract_subblock(sub_past, past, 0, past_matrix_size - 1, 0, 20);
+		
+		pnl_mat_get_row(vector_tmp, market_trajectory, i);
+		pnl_mat_add_row(sub_past, past_matrix_size - 1, vector_tmp);
+
+		//pnl_mat_set_row(sub_past, vector_tmp, past_matrix_size - 1);
+
+		// Test if we are in an observation date
+		if (i % N == 0) {
+			pnl_mat_set_row(past, vector_tmp, past_matrix_size - 1);
+			past_matrix_size++;
+		}
+
+		// Compute delta and set portfolio_values array
+		pricer_->delta(sub_past, time, current_delta, icDelta);
+		// Delta_diff = delta(i) - delta(i-1)
+		pnl_vect_clone(delta_diff, current_delta);
+		pnl_vect_minus_vect(delta_diff, previous_delta);
+		portfolio_current_value = portfolio_current_value * actualization_factor - pnl_vect_scalar_prod(delta_diff, vector_tmp);
+		pnl_vect_set(portfolio_values_, i, portfolio_current_value);
+		pnl_vect_clone(previous_delta, current_delta);
+
+		// Price accticia and set acticcia_prices array
+		pricer_->price(sub_past, time, accticia_current_price, ic);
+		pnl_vect_set(accticia_prices_, i, accticia_current_price);		
+	}
+
+	p_and_l = portfolio_current_value + pnl_vect_scalar_prod(current_delta, vector_tmp) - pricer_->opt_->payoff(market_trajectory);
+
+	pnl_vect_free(&current_spot);
+	pnl_vect_free(&previous_delta);
+	pnl_vect_free(&current_delta);
+	pnl_vect_free(&icDelta);
+	pnl_mat_free(&past);
+	pnl_vect_free(&vector_tmp);
+	pnl_vect_free(&delta_diff);
+	pnl_mat_free(&sub_past);
 }
 
 void Couverture::profits_and_losses(const PnlMat *market_trajectory, double &p_and_l, double &pl_sur_P0)

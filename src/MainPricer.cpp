@@ -7,79 +7,86 @@
 #include "PricerMC.hpp"
 #include "PricerBS.hpp"
 #include "ActicciaProduct.hpp"
+#include "Couverture.hpp"
 #include <ctime>
 
 using namespace std;
 
 int main(int argc, char **argv) {
+	/* Test pricing of a vanillaOption using MonteCarlo and compare it to the BS formula */
+
 	/*VanillaOption *vanillaOption = new VanillaOption(3, 26, 1, 107);
 	PnlVect *sigma = pnl_vect_create_from_double(1, 0.2);
 	PnlVect *spot = pnl_vect_create_from_double(1, 100);
 	BlackScholesModel* model = new BlackScholesModel(1, 0.2, 0, sigma, spot);
 
 	PnlRandom* rng = new PnlRandom();
-	PricerMC *pricerMC = new PricerMC(model, vanillaOption, rng, 0.1, 500000, 1);
+	PricerMC *pricerMC = new PricerMC(model, vanillaOption, rng, 0.1, 5000, 1);
 
 	double prix, ic;
 	pricerMC->price(prix, ic);
+	PnlVect *delta = pnl_vect_create_from_double(1, 0);
+	PnlVect *icDelta = pnl_vect_create_from_double(1, 0);
+	PnlMat *past = pnl_mat_create(1, 1);
+	pricerMC->delta(past, 0, delta, icDelta);
+	cout << "Voici le prix MC : " << prix << "et l'IC " << ic << " et Delta : ";
+	pnl_vect_print(delta);
 
 	PricerBS *pricerBS = new PricerBS(model, vanillaOption, rng, 0.1, 1000, 1);
 	double prixBS, ic2 = 1;
+	PnlVect *deltaBS = pnl_vect_create_from_double(1, 0);
+	PnlVect *icDeltaBS = pnl_vect_create_from_double(1, 0);
+	PnlMat *pastBS = pnl_mat_create(1, 20);
+	pnl_mat_set(pastBS, 0, 0, 100);
 	pricerBS->price(prixBS, ic2);
+	pricerBS->delta(pastBS, 0, deltaBS, icDeltaBS);
+	cout << "Voici le prix BS : " << prixBS << "et l'IC " << ic2 << " et Delta : ";
+	pnl_vect_print(deltaBS);*/
 
-	cout << "Voici le prix MC : " << prix << "et l'IC " << ic << "\n";
 
-	cout << "Voici le prix BS : " << prixBS << "et l'IC " << ic2 << "\n";*/
-
-	ActicciaProduct* acticciaProduct = new ActicciaProduct(2, 26, 20);
+	/* Compute Price and Deltas of Acticca*/
+	/*ActicciaProduct* acticciaProduct = new ActicciaProduct(2, 26, 20);
 	PnlVect *sigma = pnl_vect_create_from_double(20, 0.2);
 	PnlVect *spot = pnl_vect_create_from_double(20, 100);
 	BlackScholesModel* model = new BlackScholesModel(20, 0.2, 0, sigma, spot);
 
 	PnlRandom* rng = new PnlRandom();
-	PricerMC *pricerMC = new PricerMC(model, acticciaProduct, rng, 0.1, 500000, 1);
+	PricerMC *pricerMC = new PricerMC(model, acticciaProduct, rng, 0.1, 50000, 1);
 
-	double prix, ic;
+	double prix = 0 , ic = 0;
 	pricerMC->price(prix, ic);
 	cout << "Voici le prix MC d'Acticcia : " << prix << "et l'IC " << ic << "\n";
+
+	double t = 1.0 / 27.0;
+	PnlVect *delta = pnl_vect_create_from_double(20, 0);
+	PnlVect *icDelta = pnl_vect_create_from_double(20, 0);
+	PnlMat *past = pnl_mat_create(1, 20);
+	pnl_mat_set_row(past, spot, 0);
+	cout << "this is the past matrix : \n";
+	pnl_mat_print(past);
+	pricerMC->delta(past, t, delta, icDelta);
+	cout << " \nVecteur des Deltas : " << "\n";
+	pnl_vect_print(delta);*/
+	int H = 12;
+	int N = 4;
+	double T = 0.5;
+	ActicciaProduct* acticciaProduct = new ActicciaProduct(T, N, 20);
+	PnlVect *sigma = pnl_vect_create_from_double(20, 0.2);
+	PnlVect *spot = pnl_vect_create_from_double(20, 100);
+	BlackScholesModel* model = new BlackScholesModel(20, 0.2, 0, sigma, spot);
+	PnlRandom* rng = new PnlRandom();
+	PricerMC *pricerMC = new PricerMC(model, acticciaProduct, rng, 0.1, 100, H);
+
+	PnlMat* market_trajectory = pnl_mat_create(13, 20);
+	model->simul_market(market_trajectory, T, H, rng);
+
+	Couverture* couverture = new Couverture(H, pricerMC);
+	double P_and_L = 0;
+	couverture->profits_and_losses2(market_trajectory, P_and_L);
+
+	double p_and_l0 = 0;
+	double P_and_L2 = 0;
+	couverture->profits_and_losses(market_trajectory, P_and_L2, p_and_l0);
+
 	return 0;
-	/*
-
-    PricerMC *pricerMC = new PricerMC(argv[1]);
-    PnlMat *market_trajectory;
-    if(argc == 3){
-        market_trajectory = pnl_mat_create_from_file(argv[2]);
-    }
-    else if (argc == 2){
-        market_trajectory = pnl_mat_create(pricerMC->H_ + 1, pricerMC->mod_->size_);
-        pricerMC->mod_->simul_market(market_trajectory, pricerMC->opt_->T_, pricerMC->H_,pricerMC->rng_);
-    }
-    else{
-        cerr<<"\nERROR: Number of argument incorrect ";
-        throw;
-    }
-
-    Couverture *couvertureMC = new Couverture(pricerMC);
-
-    double PL_MC = 0, pl_sur_P0_MC=0;
-
-
-
-    clock_t  start;
-    start = clock();
-    couvertureMC->profits_and_losses(market_trajectory, PL_MC, pl_sur_P0_MC);
-    clock_t end = clock();
-
-    cout << "Le P&L par MC est : " << PL_MC << endl;
-    cout << "Le P&L/P0 par MC est : " << pl_sur_P0_MC << endl;
-
-    cout<< "The profits and losses took : " << (end - start)/ (double)(CLOCKS_PER_SEC / 1000) << " ms \n";
-
-    cout << "############" << endl;
-
-
-    pnl_mat_free(&market_trajectory);
-    delete couvertureMC;
-
-    exit(0);*/
 }

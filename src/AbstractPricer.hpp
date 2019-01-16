@@ -24,7 +24,6 @@ public:
 
     int H_;
 
-    AbstractPricer(char *fileName);
     AbstractPricer(BlackScholesModel *model, Option *option, RandomGenerator *rng, double d, size_t i, int H);
 
     virtual void price(double &prix, double &ic);

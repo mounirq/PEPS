@@ -10,7 +10,7 @@ class BlackScholesModel
 {
 public:
     int size_; /// nombre d'actifs du modèle
-    double r_; /// taux d'intérêt
+    double r_; /// risk free rate (used in couverture)
     double rho_; /// paramètre de corrélation
     PnlVect *sigma_; /// vecteur de volatilités
     PnlVect *spot_; /// valeurs initiales des sous-jacents
