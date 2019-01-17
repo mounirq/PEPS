@@ -38,6 +38,7 @@ void Couverture::profits_and_losses2(const PnlMat *market_trajectory, double &p_
 		cerr << "H is not a multiple of N";
 		throw;
 	}
+
 	int numberDatesBetweenRebalancing = H_ / N;
 
 	// In t = 0 :
@@ -50,7 +51,6 @@ void Couverture::profits_and_losses2(const PnlMat *market_trajectory, double &p_
 	pnl_vect_set(accticia_prices_, 0, accticia_current_price);
 
 	pricer_->delta(sub_past, time, current_delta, icDelta);
-
 	portfolio_current_risk_value = pnl_vect_scalar_prod(current_delta, current_spot);
 	portfolio_current_risk_free_value = accticia_current_price - portfolio_current_risk_value;
 	portfolio_current_value = portfolio_current_risk_value + portfolio_current_risk_free_value;
@@ -83,16 +83,11 @@ void Couverture::profits_and_losses2(const PnlMat *market_trajectory, double &p_
 		pnl_vect_minus_vect(delta_diff, previous_delta);
 
 		portfolio_current_risk_value = pnl_vect_scalar_prod(current_delta, vector_tmp);
-		//FOR Debug
-		cout << "delta in i = " << i;
-		pnl_vect_print(current_delta);
-
 		portfolio_current_risk_free_value = portfolio_current_risk_free_value * actualization_factor - pnl_vect_scalar_prod(delta_diff, vector_tmp);
 		portfolio_current_value = portfolio_current_risk_value + portfolio_current_risk_free_value;
 
 		pnl_vect_set(portfolio_values_, i, portfolio_current_value);
 		pnl_vect_clone(previous_delta, current_delta);
-
 	}
 
 	p_and_l = portfolio_current_value + pnl_vect_scalar_prod(current_delta, vector_tmp) - pricer_->opt_->payoff(market_trajectory);

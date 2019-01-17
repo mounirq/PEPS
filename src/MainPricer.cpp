@@ -103,32 +103,6 @@ int main(int argc, char **argv) {
 	else {
 		pnl_vect_fprint(file2, couverture->portfolio_values_);
 	}*/
-	/*
-	FILE *file1;
-	errno_t err;
-	PnlVect *vectTest = pnl_vect_create_from_scalar(10, 2);
-	if ((err = fopen_s(&file1, "C:/Users/Mounir/Desktop/3A/PEPS/acticcia_prices.txt", "w+")) != 0) {
-		perror("Error opening file");
-	}
-	else {
-		pnl_vect_fprint(file1, vectTest);
-	}
-
-	int i = _fcloseall();
-
-	FILE *file2;
-	errno_t err2;
-	if ((err2 = fopen_s(&file2, "C:/Users/Mounir/Desktop/3A/PEPS/portfolio_values.txt", "w")) != 0) {
-		perror("Error opening file");
-	}
-	else {
-		pnl_vect_fprint(file2, vectTest);
-	}	*/
-
-	/*double p_and_l0 = 0;
-	double P_and_L2 = 0;
-	couverture->profits_and_losses(market_trajectory, P_and_L2, p_and_l0);*/
-
 
 	return 0;
 }
