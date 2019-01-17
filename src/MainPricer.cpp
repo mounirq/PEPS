@@ -67,6 +67,7 @@ int main(int argc, char **argv) {
 	pricerMC->delta(past, t, delta, icDelta);
 	cout << " \nVecteur des Deltas : " << "\n";
 	pnl_vect_print(delta);*/
+
 	int H = 12;
 	int N = 4;
 	double T = 0.5;
@@ -75,7 +76,7 @@ int main(int argc, char **argv) {
 	PnlVect *spot = pnl_vect_create_from_double(20, 100);
 	BlackScholesModel* model = new BlackScholesModel(20, 0.2, 0, sigma, spot);
 	PnlRandom* rng = new PnlRandom();
-	PricerMC *pricerMC = new PricerMC(model, acticciaProduct, rng, 0.1, 100, H);
+	PricerMC *pricerMC = new PricerMC(model, acticciaProduct, rng, 0.1, 10000, H);
 
 	PnlMat* market_trajectory = pnl_mat_create(13, 20);
 	model->simul_market(market_trajectory, T, H, rng);
@@ -83,10 +84,51 @@ int main(int argc, char **argv) {
 	Couverture* couverture = new Couverture(H, pricerMC);
 	double P_and_L = 0;
 	couverture->profits_and_losses2(market_trajectory, P_and_L);
+	cout << "Acticcia prices : \n";
+	pnl_vect_print(couverture->accticia_prices_);
+	cout << "Portfolio values : \n";
+	pnl_vect_print(couverture->portfolio_values_);
+	/*FILE *file1 = fopen("C:/Users/Mounir/Desktop/3A/PEPS/acticcia_prices.txt", "w");
+	if (file1 == NULL) {
+		perror("Error opening file");
+	}
+	else {
+		pnl_vect_fprint(file1, couverture->accticia_prices_);
+	}
+	
+	FILE *file2 = fopen("C:/Users/Mounir/Desktop/3A/PEPS/portfolio_values.txt", "w");
+	if (file2 == NULL) {
+		perror("Error opening file");
+	}
+	else {
+		pnl_vect_fprint(file2, couverture->portfolio_values_);
+	}*/
+	/*
+	FILE *file1;
+	errno_t err;
+	PnlVect *vectTest = pnl_vect_create_from_scalar(10, 2);
+	if ((err = fopen_s(&file1, "C:/Users/Mounir/Desktop/3A/PEPS/acticcia_prices.txt", "w+")) != 0) {
+		perror("Error opening file");
+	}
+	else {
+		pnl_vect_fprint(file1, vectTest);
+	}
 
-	double p_and_l0 = 0;
+	int i = _fcloseall();
+
+	FILE *file2;
+	errno_t err2;
+	if ((err2 = fopen_s(&file2, "C:/Users/Mounir/Desktop/3A/PEPS/portfolio_values.txt", "w")) != 0) {
+		perror("Error opening file");
+	}
+	else {
+		pnl_vect_fprint(file2, vectTest);
+	}	*/
+
+	/*double p_and_l0 = 0;
 	double P_and_L2 = 0;
-	couverture->profits_and_losses(market_trajectory, P_and_L2, p_and_l0);
+	couverture->profits_and_losses(market_trajectory, P_and_L2, p_and_l0);*/
+
 
 	return 0;
 }

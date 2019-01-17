@@ -93,11 +93,11 @@ void MonteCarlo::delta(const PnlMat *past, double t, PnlVect *delta, PnlVect *ic
             mod_->shiftAsset(shift_plus_path, path, d, fdStep_, t, timeStep);
 
             mod_->shiftAsset(shift_moins_path, path, d, -fdStep_, t, timeStep);
-
+			
             payoffShiftPlus = opt_->payoff(shift_plus_path);
 
             payoffShiftMoins = opt_->payoff(shift_moins_path);
-
+			
             pnl_vect_set(sum, d, GET(sum,d) + payoffShiftPlus - payoffShiftMoins);
 
             pnl_vect_set(icSum, d, GET(icSum,d) + (payoffShiftPlus - payoffShiftMoins) * (payoffShiftPlus - payoffShiftMoins));
