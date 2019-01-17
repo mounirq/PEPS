@@ -39,7 +39,7 @@ void Couverture::profits_and_losses2(const PnlMat *market_trajectory, double &p_
 		throw;
 	}
 	int numberDatesBetweenRebalancing =  H_ / N;
-	
+
 	// In t = 0 :
 	PnlMat *sub_past = pnl_mat_create(1, 20);
 	pnl_vect_clone(current_spot, pricer_->mod_->spot_);
@@ -50,7 +50,7 @@ void Couverture::profits_and_losses2(const PnlMat *market_trajectory, double &p_
 	pnl_vect_set(accticia_prices_, 0, accticia_current_price);
 
 	pricer_->delta(sub_past, time, previous_delta, icDelta);
-	
+
 	portfolio_current_risk_value = pnl_vect_scalar_prod(previous_delta, current_spot );
 	portfolio_current_risk_free_value = accticia_current_price - portfolio_current_risk_value;
 	portfolio_current_value = portfolio_current_risk_value + portfolio_current_risk_free_value;
@@ -62,7 +62,7 @@ void Couverture::profits_and_losses2(const PnlMat *market_trajectory, double &p_
 		//pnl_mat_resize(sub_past, past_matrix_size, 20);
 
 		pnl_mat_extract_subblock(sub_past, past, 0, past_matrix_size - 1, 0, 20);
-		
+
 		pnl_mat_get_row(vector_tmp, market_trajectory, i);
 		pnl_mat_add_row(sub_past, past_matrix_size - 1, vector_tmp);
 
@@ -79,13 +79,18 @@ void Couverture::profits_and_losses2(const PnlMat *market_trajectory, double &p_
 		// Delta_diff = delta(i) - delta(i-1)
 		pnl_vect_clone(delta_diff, current_delta);
 		pnl_vect_minus_vect(delta_diff, previous_delta);
-		portfolio_current_value = portfolio_current_value * actualization_factor - pnl_vect_scalar_prod(delta_diff, vector_tmp);
+
+		portfolio_current_risk_value = pnl_vect_scalar_prod(current_delta, vector_tmp);
+		portfolio_current_risk_free_value = portfolio_current_value * actualization_factor - pnl_vect_scalar_prod(delta_diff, vector_tmp);
+		portfolio_current_value = portfolio_current_risk_value + portfolio_current_risk_free_value;
+
+		//portfolio_current_value = portfolio_current_value * actualization_factor - pnl_vect_scalar_prod(delta_diff, vector_tmp);
 		pnl_vect_set(portfolio_values_, i, portfolio_current_value);
 		pnl_vect_clone(previous_delta, current_delta);
 
 		// Price accticia and set acticcia_prices array
 		pricer_->price(sub_past, time, accticia_current_price, ic);
-		pnl_vect_set(accticia_prices_, i, accticia_current_price);		
+		pnl_vect_set(accticia_prices_, i, accticia_current_price);
 	}
 
 	p_and_l = portfolio_current_value + pnl_vect_scalar_prod(current_delta, vector_tmp) - pricer_->opt_->payoff(market_trajectory);
