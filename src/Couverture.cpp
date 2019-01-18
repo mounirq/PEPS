@@ -17,14 +17,15 @@ Couverture::~Couverture() {
 void Couverture::profits_and_losses2(const PnlMat *market_trajectory, double &p_and_l)
 {
 	// Create variables needed
-	PnlVect *current_spot = pnl_vect_create(20);
-	PnlVect *previous_delta = pnl_vect_create(20);
-	PnlVect *current_delta = pnl_vect_create(20);
-	PnlVect *icDelta = pnl_vect_create(20);
+	int nbAssets = pricer_->opt_->size_;
+	PnlVect *current_spot = pnl_vect_create(nbAssets);
+	PnlVect *previous_delta = pnl_vect_create(nbAssets);
+	PnlVect *current_delta = pnl_vect_create(nbAssets);
+	PnlVect *icDelta = pnl_vect_create(nbAssets);
 	int N = pricer_->opt_->nbTimeSteps_;
-	PnlMat *past = pnl_mat_create(N + 1, 20);
-	PnlVect *vector_tmp = pnl_vect_create(20);
-	PnlVect *delta_diff = pnl_vect_create(20);
+	PnlMat *past = pnl_mat_create(N + 1, nbAssets);
+	PnlVect *vector_tmp = pnl_vect_create(nbAssets);
+	PnlVect *delta_diff = pnl_vect_create(nbAssets);
 	double accticia_current_price = 0;
 	double portfolio_current_value = 0;
 	double ic = 0;
@@ -59,15 +60,16 @@ void Couverture::profits_and_losses2(const PnlMat *market_trajectory, double &p_
 	pnl_vect_set(portfolio_values_, 0, portfolio_current_value);
 
 	for (int i = 1; i <= H_; i++) {
-		time = double(i) / H_;
+		time = double(i) * pricer_->opt_->T_ / H_;
 
-		pnl_mat_extract_subblock(sub_past, past, 0, past_matrix_size - 1, 0, 20);
+		pnl_mat_extract_subblock(sub_past, past, 0, past_matrix_size - 1, 0, nbAssets);
 
 		pnl_mat_get_row(vector_tmp, market_trajectory, i);
 		pnl_mat_add_row(sub_past, past_matrix_size - 1, vector_tmp);
 
+
 		// Test if we are in an observation date
-		if (i % N == 0) {
+		if (i % numberDatesBetweenRebalancing == 0) {
 			pnl_mat_set_row(past, vector_tmp, past_matrix_size - 1);
 			past_matrix_size++;
 		}
@@ -131,9 +133,9 @@ void Couverture::profits_and_losses(const PnlMat *market_trajectory, double &p_a
 	double ic = 0;
 	double v = 0;
 	pricer_->price(prix, ic);
+
 	double prix0 = prix;
 	pricer_->delta(sub_past, 0, deltas, ics);
-
 	//calcul de V(0)
 	v = prix - pnl_vect_scalar_prod(deltas, spots);
 	pnl_vect_set(vect_V, 0, v);
@@ -146,7 +148,6 @@ void Couverture::profits_and_losses(const PnlMat *market_trajectory, double &p_a
 	double nbOfSpotsNeeded = 0;
 
 	double index_row_to_fill = 1;
-
 	for (int i = 1; i <= H; i++) {
 
 		//Mise à jour de la matrice past
@@ -175,6 +176,7 @@ void Couverture::profits_and_losses(const PnlMat *market_trajectory, double &p_a
 		// v = V(i-1) * exp(rT/H) - (delta(i) - delta(i-1)) * S(tho_i)
 		v = pnl_vect_get(vect_V, i - 1) * actualisationFactor - pnl_vect_scalar_prod(diff_delta, spots);
 		pnl_vect_set(vect_V, i, v);
+
 	}
 
 	// A la sortie de la boucle : deltas = delta(H) et spots = S(tho_H)
