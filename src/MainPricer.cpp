@@ -83,12 +83,9 @@ int main(int argc, char **argv) {
 
 	Couverture* couverture = new Couverture(H, pricerMC);
 	double P_and_L = 0;
-	couverture->profits_and_losses2(market_trajectory, P_and_L);
-	cout << "Acticcia prices : \n";
-	pnl_vect_print(couverture->accticia_prices_);
-	cout << "Portfolio values : \n";
-	pnl_vect_print(couverture->portfolio_values_);
-	/*FILE *file1 = fopen("C:/Users/Mounir/Desktop/3A/PEPS/acticcia_prices.txt", "w");
+    couverture->profits_and_losses2(market_trajectory, P_and_L);
+
+	FILE *file1 = fopen("/home/mounirq/3A/PEPS/acticcia_prices.txt", "w");
 	if (file1 == NULL) {
 		perror("Error opening file");
 	}
@@ -96,13 +93,13 @@ int main(int argc, char **argv) {
 		pnl_vect_fprint(file1, couverture->accticia_prices_);
 	}
 	
-	FILE *file2 = fopen("C:/Users/Mounir/Desktop/3A/PEPS/portfolio_values.txt", "w");
+	FILE *file2 = fopen("/home/mounirq/3A/PEPS/portfolio_values.txt", "w");
 	if (file2 == NULL) {
 		perror("Error opening file");
 	}
 	else {
 		pnl_vect_fprint(file2, couverture->portfolio_values_);
-	}*/
+	}
 
 	return 0;
 }
