@@ -2,11 +2,11 @@
 
 using namespace std;
 
-Couverture::Couverture(int H, AbstractPricer *pricer)
+Couverture::Couverture(int totalDays, AbstractPricer *pricer)
 {
-	H_ = H;
-	accticia_prices_ = pnl_vect_create(H_ + 1);
-	portfolio_values_ = pnl_vect_create(H_ + 1);
+	H_ = pricer->H_;
+	accticia_prices_ = pnl_vect_create(totalDays + 1);
+	portfolio_values_ = pnl_vect_create(totalDays + 1);
 	pricer_ = pricer;
 }
 
@@ -33,14 +33,14 @@ void Couverture::profits_and_losses2(const PnlMat *market_trajectory, double &p_
 	double portfolio_current_risk_free_value = 0;
 	int past_matrix_size = 2;
 	double time = 0;
-	double actualization_factor = exp(pricer_->mod_->r_*pricer_->opt_->T_ / H_);
+	double T = 	pricer_->opt_->T_;
+	// TODO : Change 250 by the actual number of Business Days
+	double actualization_factor = exp(pricer_->mod_->r_*(1.0/250));
 
 	if (H_ % N != 0) {
 		cerr << "H is not a multiple of N";
 		throw;
 	}
-
-	int numberDatesBetweenRebalancing = H_ / N;
 
 	// In t = 0 :
 	PnlMat *sub_past = pnl_mat_create(1, 20);
@@ -59,35 +59,41 @@ void Couverture::profits_and_losses2(const PnlMat *market_trajectory, double &p_
 
 	pnl_vect_set(portfolio_values_, 0, portfolio_current_value);
 
-	for (int i = 1; i <= H_; i++) {
-		time = double(i) * pricer_->opt_->T_ / H_;
+	double diffRiskAndRiskFree = 0;
+	for (int i = 1; i <= int(T*250); i++) {
+		time = double(i)/250;
 
 		pnl_mat_extract_subblock(sub_past, past, 0, past_matrix_size - 1, 0, nbAssets);
-
 		pnl_mat_get_row(vector_tmp, market_trajectory, i);
 		pnl_mat_add_row(sub_past, past_matrix_size - 1, vector_tmp);
 
 
 		// Test if we are in an observation date
-		if (i % numberDatesBetweenRebalancing == 0) {
+		if (i % (int(T*250/N)) == 0) {
 			pnl_mat_set_row(past, vector_tmp, past_matrix_size - 1);
 			past_matrix_size++;
+		}
+
+		// Test if we are in a rebalancing date.
+		if (i % (int(T*250/H_)) == 0){
+			// Compute delta and set portfolio_values array
+			pricer_->delta(sub_past, time, current_delta, icDelta);
+			// Delta_diff = delta(i) - delta(i-1)
+			pnl_vect_clone(delta_diff, current_delta);
+			pnl_vect_minus_vect(delta_diff, previous_delta);
+			diffRiskAndRiskFree	 = pnl_vect_scalar_prod(delta_diff, vector_tmp);
 		}
 
 		// Price accticia and set acticcia_prices array
 		pricer_->price(sub_past, time, accticia_current_price, ic);
 		pnl_vect_set(accticia_prices_, i, accticia_current_price);
 
-		// Compute delta and set portfolio_values array
-		pricer_->delta(sub_past, time, current_delta, icDelta);
-		// Delta_diff = delta(i) - delta(i-1)
-		pnl_vect_clone(delta_diff, current_delta);
-		pnl_vect_minus_vect(delta_diff, previous_delta);
-
+		// Compute the value of the heding portfolio
 		portfolio_current_risk_value = pnl_vect_scalar_prod(current_delta, vector_tmp);
-		portfolio_current_risk_free_value = portfolio_current_risk_free_value * actualization_factor - pnl_vect_scalar_prod(delta_diff, vector_tmp);
+		portfolio_current_risk_free_value = portfolio_current_risk_free_value * actualization_factor - diffRiskAndRiskFree;
 		portfolio_current_value = portfolio_current_risk_value + portfolio_current_risk_free_value;
 
+		diffRiskAndRiskFree = 0;
 		pnl_vect_set(portfolio_values_, i, portfolio_current_value);
 		pnl_vect_clone(previous_delta, current_delta);
 	}
@@ -194,3 +200,4 @@ void Couverture::profits_and_losses(const PnlMat *market_trajectory, double &p_a
 	pnl_mat_free(&sub_past);
 	pnl_mat_free(&past);
 }
+

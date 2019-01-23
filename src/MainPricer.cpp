@@ -68,9 +68,11 @@ int main(int argc, char **argv) {
 	cout << " \nVecteur des Deltas : " << "\n";
 	pnl_vect_print(delta);*/
 
-	int H = 12;
-	int N = 4;
-	double T = 0.5;
+	int H = 100;
+	int N = 2;
+	double T = 2.0;
+	int numberBusinessDayPerYear = 250;
+	int numberTotalDays = int(T * numberBusinessDayPerYear);
 	ActicciaProduct* acticciaProduct = new ActicciaProduct(T, N, 20);
 	PnlVect *sigma = pnl_vect_create_from_double(20, 0.2);
 	PnlVect *spot = pnl_vect_create_from_double(20, 100);
@@ -78,22 +80,22 @@ int main(int argc, char **argv) {
 	PnlRandom* rng = new PnlRandom();
 	PricerMC *pricerMC = new PricerMC(model, acticciaProduct, rng, 0.1, 10000, H);
 
-	PnlMat* market_trajectory = pnl_mat_create(13, 20);
-	model->simul_market(market_trajectory, T, H, rng);
-
-	Couverture* couverture = new Couverture(H, pricerMC);
+	PnlMat* market_trajectory = pnl_mat_create(numberTotalDays+ 1, 20);
+	model->simul_market(market_trajectory, T, numberTotalDays, rng);
+	Couverture* couverture = new Couverture(numberTotalDays, pricerMC);
 	double P_and_L = 0;
     couverture->profits_and_losses2(market_trajectory, P_and_L);
 
-	FILE *file1 = fopen("/home/mounirq/3A/PEPS/acticcia_prices.txt", "w");
+	FILE *file1 = fopen("/user/7/mouaddia/3A/test_peps/test/acticcia_prices.txt", "w");
 	if (file1 == NULL) {
 		perror("Error opening file");
 	}
 	else {
+		//pnl_vect_print(couverture->accticia_prices_);
 		pnl_vect_fprint(file1, couverture->accticia_prices_);
 	}
-	
-	FILE *file2 = fopen("/home/mounirq/3A/PEPS/portfolio_values.txt", "w");
+
+	FILE *file2 = fopen("/user/7/mouaddia/3A/test_peps/test/portfolio_values.txt", "w");
 	if (file2 == NULL) {
 		perror("Error opening file");
 	}
@@ -103,3 +105,4 @@ int main(int argc, char **argv) {
 
 	return 0;
 }
+
